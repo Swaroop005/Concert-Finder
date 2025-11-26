@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Concert Finder Chatbot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #ffecd2, #fcb69f);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-image 0.5s ease;
+    }
+
+    .chatbot-container {
+      position: relative;
+      z-index: 10;
+    }
+
+    .chatbot-window {
+      display: none;
+      flex-direction: column;
+      width: 320px;
+      height: 450px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      background: linear-gradient(to bottom right, rgba(255, 236, 210, 0.9), rgba(252, 182, 159, 0.9));
+      overflow: hidden;
+      backdrop-filter: blur(5px);
+      position: relative;
+    }
+
+    .chatbot-window::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-size: cover;
+      background-position: center;
+      opacity: 0.2;
+      z-index: -1;
+      transition: opacity 0.5s ease;
+    }
+
+    .chatbot-header {
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      color: white;
+      padding: 15px;
+      font-size: 20px;
+      font-family: 'Pacifico', cursive;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chatbot-messages {
+      flex: 1;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.7);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      max-width: 80%;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .bot-message {
+      background-color: #e1f5fe;
+      align-self: flex-start;
+    }
+
+    .user-message {
+      background-color: #c8e6c9;
+      align-self: flex-end;
+    }
+
+    .chatbot-input {
+      display: flex;
+      padding: 10px;
+      background-color: #fff3e0;
+    }
+
+    .chatbot-input input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-right: 8px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .chatbot-input button {
+      background-color: #0072ff;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .chatbot-button {
+      background-color: #0072ff;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 24px;
+      padding: 12px 16px;
+      cursor: pointer;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      z-index: 10;
+    }
+
+    .close-chatbot {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    /* City backgrounds */
+    .mumbai-bg {
+      background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
+                  url('https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .delhi-bg {
+      background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
+                  url('https://images.unsplash.com/photo-1501612780327-45045538702b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .bangalore-bg {
+      background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
+                  url('https://images.unsplash.com/photo-1496293455970-f8581aae0e3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .default-bg {
+      background: linear-gradient(to right, #ffecd2, #fcb69f);
+    }
+
+    /* Artist backgrounds for chatbot */
+    .arijit-bg::before {
+      background-image: url('https://images.unsplash.com/photo-1608889825103-eb5c146c5b35?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    }
+
+    .taylor-bg::before {
+      background-image: url('https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    }
+
+    .shreya-bg::before {
+      background-image: url('https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    }
+
+    .dua-bg::before {
+      background-image: url('https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    }
+
+    .ed-bg::before {
+      background-image: url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    }
+
+    .imagine-bg::before {
+      background-image: url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    }
+  </style>
+</head>
+<body class="default-bg">
+
+  <div class="chatbot-container">
+    <div class="chatbot-window" id="chatbotWindow">
+      <div class="chatbot-header">
+        <span>🎤 Concert Buddy</span>
+        <button class="close-chatbot" onclick="toggleChatbot()">×</button>
+      </div>
+      <div class="chatbot-messages" id="chatMessages">
+        <div class="message bot-message">Hi there! Looking for a concert? 🎶 Ask about cities (Mumbai, Delhi, Bangalore) or artists!</div>
+      </div>
+      <div class="chatbot-input">
+        <input type="text" id="userInput" placeholder="Ask me anything..." onkeypress="handleKey(event)">
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+    <button class="chatbot-button" onclick="toggleChatbot()">💬</button>
+  </div>
+
+  <script>
+    function toggleChatbot() {
+      const chatbot = document.getElementById("chatbotWindow");
+      chatbot.style.display = chatbot.style.display === "flex" ? "none" : "flex";
+    }
+
+    function handleKey(event) {
+      if (event.key === "Enter") sendMessage();
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("userInput");
+      const messages = document.getElementById("chatMessages");
+      const chatbot = document.getElementById("chatbotWindow");
+      const userText = input.value.trim();
+      if (!userText) return;
+
+      const userMsg = document.createElement("div");
+      userMsg.className = "message user-message";
+      userMsg.textContent = userText;
+      messages.appendChild(userMsg);
+
+      const botMsg = document.createElement("div");
+      botMsg.className = "message bot-message";
+      const body = document.body;
+
+      // Reset all backgrounds first
+      body.classList.remove("mumbai-bg", "delhi-bg", "bangalore-bg", "default-bg");
+      chatbot.classList.remove("arijit-bg", "taylor-bg", "shreya-bg", "dua-bg", "ed-bg", "imagine-bg");
+
+      // Check for cities
+      if (userText.toLowerCase().includes("mumbai")) {
+        botMsg.textContent = "🔥 Arijit Singh and Taylor Swift are performing in Mumbai this weekend! Check out the concert at Mahalaxmi Racecourse!";
+        body.classList.add("mumbai-bg");
+      } else if (userText.toLowerCase().includes("delhi")) {
+        botMsg.textContent = "🎤 Shreya Ghoshal and Dua Lipa are rocking Delhi at Jawaharlal Nehru Stadium! Tickets selling fast!";
+        body.classList.add("delhi-bg");
+      } else if (userText.toLowerCase().includes("bangalore")) {
+        botMsg.textContent = "🎸 Ed Sheeran and Imagine Dragons are live in Bangalore at Palace Grounds! Don't miss this epic show!";
+        body.classList.add("bangalore-bg");
+      } 
+      // Check for artists
+      else if (userText.toLowerCase().includes("arijit") || userText.toLowerCase().includes("arijeet")) {
+        botMsg.textContent = "🎵 Arijit Singh is performing his soulful melodies in 5 cities next month! Would you like tour dates?";
+        chatbot.classList.add("arijit-bg");
+      } else if (userText.toLowerCase().includes("taylor")) {
+        botMsg.textContent = "✨ Taylor Swift's Eras Tour is coming to India! Pre-sale tickets available next week.";
+        chatbot.classList.add("taylor-bg");
+      } else if (userText.toLowerCase().includes("shreya") || userText.toLowerCase().includes("ghoshal")) {
+        botMsg.textContent = "🎶 Shreya Ghoshal's classical fusion concert series starts next month. VIP packages available!";
+        chatbot.classList.add("shreya-bg");
+      } else if (userText.toLowerCase().includes("dua") || userText.toLowerCase().includes("lipa")) {
+        botMsg.textContent = "💃 Dua Lipa's Future Nostalgia Tour includes 3 India stops! Dance-pop extravaganza coming soon.";
+        chatbot.classList.add("dua-bg");
+      } else if (userText.toLowerCase().includes("ed") || userText.toLowerCase().includes("sheeran")) {
+        botMsg.textContent = "🎸 Ed Sheeran's Mathematics Tour has added new dates! Acoustic set and full band performances.";
+        chatbot.classList.add("ed-bg");
+      } else if (userText.toLowerCase().includes("imagine") || userText.toLowerCase().includes("dragons")) {
+        botMsg.textContent = "🤘 Imagine Dragons is bringing their Mercury World Tour to India! Expect pyrotechnics and high-energy performance.";
+        chatbot.classList.add("imagine-bg");
+      } else {
+        botMsg.textContent = "🎫 Tell me a city (Mumbai, Delhi, Bangalore) or artist name for concert info!";
+        body.classList.add("default-bg");
+      }
+
+      messages.appendChild(botMsg);
+      input.value = "";
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+
+  function sendMessage() {
+  const input = document.getElementById("userInput");
+  const messages = document.getElementById("chatMessages");
+  const chatbot = document.getElementById("chatbotWindow");
+  const userText = input.value.trim();
+  if (!userText) return;
+
+  const userMsg = document.createElement("div");
+  userMsg.className = "message user-message";
+  userMsg.textContent = userText;
+  messages.appendChild(userMsg);
+
+  const botMsg = document.createElement("div");
+  botMsg.className = "message bot-message";
+  const body = document.body;
+
+  // Reset backgrounds
+  body.classList.remove("mumbai-bg", "delhi-bg", "bangalore-bg", "default-bg");
+  chatbot.classList.remove("arijit-bg", "taylor-bg", "shreya-bg", "dua-bg", "ed-bg", "imagine-bg");
+
+  const text = userText.toLowerCase();
+
+  // CITY RESPONSES
+  if (text.includes("mumbai")) {
+    botMsg.textContent =
+      "🔥 Arijit Singh and Taylor Swift are performing in Mumbai this weekend!";
+    body.classList.add("mumbai-bg");
+
+  } else if (text.includes("delhi")) {
+    botMsg.textContent =
+      "🎤 Shreya Ghoshal and Dua Lipa are rocking Delhi at Jawaharlal Nehru Stadium!";
+    body.classList.add("delhi-bg");
+
+  } else if (text.includes("bangalore")) {
+    botMsg.textContent =
+      "🎸 Ed Sheeran and Imagine Dragons are live in Bangalore at Palace Grounds!";
+    body.classList.add("bangalore-bg");
+
+
+  // ARTIST RESPONSES WITH ADDED INFORMATION
+  } else if (text.includes("arijit")) {
+    botMsg.textContent =
+      "🎵 **Arijit Singh Info:**\n\n" +
+      "• India’s most loved soulful playback singer.\n" +
+      "• Known for: Tum Hi Ho, Kesariya, Channa Mereya.\n" +
+      "• Performs global concerts with orchestras.\n" +
+      "• Famous for emotional depth and soft voice.";
+    chatbot.classList.add("arijit-bg");
+
+  } else if (text.includes("taylor")) {
+    botMsg.textContent =
+      "✨ **Taylor Swift Info:**\n\n" +
+      "• One of the world’s biggest pop artists.\n" +
+      "• 'Eras Tour' = highest-grossing tour.\n" +
+      "• Hits: Love Story, Blank Space, Cruel Summer.\n" +
+      "• Known for storytelling and self-written songs.";
+    chatbot.classList.add("taylor-bg");
+
+  } else if (text.includes("shreya") || text.includes("ghoshal")) {
+    botMsg.textContent =
+      "🎶 **Shreya Ghoshal Info:**\n\n" +
+      "• India’s top female playback singer.\n" +
+      "• Hits: Sun Raha Hai, Teri Meri, Deewani Mastani.\n" +
+      "• Classical + modern fusion performer.\n" +
+      "• Known for melodious and smooth vocals.";
+    chatbot.classList.add("shreya-bg");
+
+  } else if (text.includes("dua") || text.includes("lipa")) {
+    botMsg.textContent =
+      "💃 **Dua Lipa Info:**\n\n" +
+      "• World-famous pop & dance-pop star.\n" +
+      "• Hits: Levitating, New Rules, Don’t Start Now.\n" +
+      "• Grammy-winning artist.\n" +
+      "• Known for energetic futuristic stage shows.";
+    chatbot.classList.add("dua-bg");
+
+  } else if (text.includes("ed") || text.includes("sheeran")) {
+    botMsg.textContent =
+      "🎸 **Ed Sheeran Info:**\n\n" +
+      "• British singer-songwriter & global icon.\n" +
+      "• Hits: Shape of You, Perfect, Photograph.\n" +
+      "• Performs solo using loop pedals.\n" +
+      "• His concerts are huge worldwide.";
+    chatbot.classList.add("ed-bg");
+
+  } else if (text.includes("imagine") || text.includes("dragons")) {
+    botMsg.textContent =
+      "🤘 **Imagine Dragons Info:**\n\n" +
+      "• Famous American rock band.\n" +
+      "• Hits: Believer, Thunder, Radioactive.\n" +
+      "• Known for energy, drums & stage visuals.\n" +
+      "• Perform at major rock festivals worldwide.";
+    chatbot.classList.add("imagine-bg");
+
+
+  } else {
+    botMsg.textContent =
+      "🎫 Tell me a city (Mumbai, Delhi, Bangalore) or an artist name to explore concerts!";
+    body.classList.add("default-bg");
+  }
+
+  messages.appendChild(botMsg);
+  messages.scrollTop = messages.scrollHeight;
+  input.value = "";
+}
+
+/*
+async function getConcertsData(query) {
+  const url = `https://songkick-api2.p.rapidapi.com/search?query=${query}&type=artist`;
+}
+  const options = {
+    method: "GET",
+    headers: {
+      "x-rapidapi-key": "async function getConcertsData(query) {
+  const url = `https://songkick-api2.p.rapidapi.com/search?query=${query}&type=artist`;
+    }
+}
+  const options = {
+    method: "GET",
+    headers: {
+      "x-rapidapi-key": "async function getConcertsData(query) {
+  const url = `https://songkick-api2.p.rapidapi.com/search?query=${query}&type=artist`;
+    }
+}
+  const options = {
+    method: "GET",
+    headers: {
+      "x-rapidapi-key": "89ba998f4dmsh7f1ee0959813ecap1dcd7ejsn412742f11615",
+      "x-rapidapi-host": "songkick-api2.p.rapidapi.com"
+    }
+  };
+
+  try {
+    const response = await fetch(url, options);
+    const result = await response.json();
+
+    if (!result || !result.resultsPage.results.artist) {
+      return "❌ No concerts found!";
+    }
+
+    const artist = result.resultsPage.results.artist[0];
+    const artistID = artist.id;
+
+    return await getArtistEvents(artistID);
+
+  } catch (error) {
+    return "⚠ Error fetching live concert data.";
+  }
+}
+
+
+
+else if (text.includes("arijit")) {
+  getConcertsData("Arijit Singh").then(data => {
+    botMsg.textContent = 
+      "🎵 Arijit Singh Info:\n" +
+      "• India’s most loved soulful playback singer.\n" +
+      "• Known for Tum Hi Ho, Kesariya.\n\n" +
+      data;  // <-- Real concerts added here
+
+    messages.appendChild(botMsg);
+    messages.scrollTop = messages.scrollHeight;
+  });
+
+  chatbot.classList.add("arijit-bg");
+  return;
+}
+*/
+  </script>
+
+</body>
+</html>
